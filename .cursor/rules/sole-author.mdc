@@ -1,0 +1,13 @@
+---
+description: This paper and repository are sole-authored. Never add coauthors.
+alwaysApply: true
+---
+
+# Sole authorship
+
+Arjun Bajpai is the only author of this paper, the public PDF, and the citation files.
+
+- Author line: Arjun Bajpai only
+- Affiliation: Windermere
+- Never add coauthors to `paper/paper.tex`, `paper/paper.pdf` metadata, `CITATION.cff`, or the README BibTeX entry
+- Brian Rodriguez and Sumit K. Jha belong in Acknowledgments only, as mentors/supervisors, not as authors
