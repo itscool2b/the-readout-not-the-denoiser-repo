@@ -54,7 +54,7 @@ See `CITATION.cff`, or use:
 @article{bajpai2026readout,
   title  = {The Readout, Not the Denoiser: Per-Step Integrated Gradients
             for Diffusion-Policy Vision-Language-Action Models},
-  author = {Bajpai, Arjun and Jha, Sumit K. and Pramanik, Vishal and Rodriguez, Brian},
+  author = {Bajpai, Arjun},
   year   = {2026},
 }
 ```
