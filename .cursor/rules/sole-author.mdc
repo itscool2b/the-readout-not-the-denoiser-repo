@@ -10,4 +10,6 @@ Arjun Bajpai is the only author of this paper, the public PDF, and the citation 
 - Author line: Arjun Bajpai only
 - Affiliation: Windermere
 - Never add coauthors to `paper/paper.tex`, `paper/paper.pdf` metadata, `CITATION.cff`, or the README BibTeX entry
-- Brian Rodriguez and Sumit K. Jha belong in Acknowledgments only, as mentors/supervisors, not as authors
+- Brian Rodriguez and Professor Sumit K. Jha belong in Acknowledgments only, as mentors/supervisors, not as authors
+- Name Jha as Professor Sumit K. Jha, Department of Computer and Information Science and Engineering, University of Florida
+- Name Brian Rodriguez with University of Florida affiliation; do not invent a title for him
