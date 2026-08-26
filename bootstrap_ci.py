@@ -236,6 +236,33 @@ def table_displacement(B, seed):
                  n_groups=0, n_rows=len(load_glob(pats)))]
 
 
+def table_verification(B, seed):
+    """Month 7 verification pass (m7_ records): the clean rerun of the main-pass
+    protocol with seed-tagged sidecars. Per-task faithfulness medians and
+    completeness pass rates on signal-bearing rows, pooled over both seeds, plus
+    the standard C1/C2 sanity medians. Emitted only when the m7_ records exist."""
+    tasks = ["PegInsertionSide", "PickCube", "PickSingleYCB", "StackCube"]
+    if not load_glob(["m7_metrics_PickCube-v1_170m_seed42.jsonl"]):
+        return []
+    out = []
+    #Explicit per-seed filenames: a seed* glob would also sweep in the
+    #m7 _m128 arm files, which report separately.
+    for task in tasks:
+        step_pats = [f"m7_metrics_{task}-v1_170m_seed{s}.jsonl" for s in (42, 142)]
+        out.append(dict(table="verification", task=task, model="170m",
+                        **ci(step_pats, "vision_err", "pct_le3", signal=True, B=B, seed=seed)))
+        faith_pats = [f"m7_metrics_faithfulness_{task}-v1_170m_seed{s}.jsonl" for s in (42, 142)]
+        for f in FAITH_FIELDS:
+            out.append(dict(table="verification", task=task, model="170m",
+                            **ci(faith_pats, f, "median", signal=True, B=B, seed=seed)))
+        for phase in ["C1", "C2"]:
+            pats = [f"m7_metrics_sanity_{phase}_{task}-v1_170m_seed{s}.jsonl" for s in (42, 142)]
+            for fld in ["spearman_vision", "spearman_language", "spearman_state"]:
+                out.append(dict(table="verification", task=f"{task}_{phase}", model="170m",
+                                **ci(pats, fld, "median", signal=True, B=B, seed=seed)))
+    return out
+
+
 PRESETS = {
     "faithfulness1b": table_faithfulness1b,
     "targets": table_targets,
@@ -243,6 +270,7 @@ PRESETS = {
     "baseline": table_baseline,
     "m128": table_m128,
     "displacement": table_displacement,
+    "verification": table_verification,
 }
 
 
