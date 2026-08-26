@@ -218,3 +218,59 @@ for task in ['PickCube','StackCube']:
     print(f"  {task}: n={n}")
     for fld in ['rho_black_gray','rho_black_blur','rho_gray_blur']:
         print(f"    {fld}: median={med([r.get(fld) for r in rows]):.6f}")
+
+print("="*70)
+print("SIDECAR PROVENANCE FINGERPRINT")
+print("  The step row records vision_gap = F(x) - F(x') at IG time on the run's")
+print("  own observation and noise seed, and F(x) = 0 by construction, so the")
+print("  faithfulness row's vision_f_baseline must equal -vision_gap exactly when")
+print("  the faithfulness stage loaded that row's own sidecar. Disagreement means")
+print("  the stage consumed a sidecar written by a different run under the shared")
+print("  pre-fix filename. EXPECTED MISMATCH (documented in the paper and in")
+print("  data/README.md): the two seed-42 m=128 faithfulness files, which loaded")
+print("  the seed-142 m=128 sidecars that had overwritten their own.")
+
+def step_file_for(faith_base):
+    """Map a faithfulness filename to its base step filename, or None."""
+    #m5_/m7_ prefixed runs: {p}_metrics_faithfulness_{rest}.jsonl -> {p}_metrics_{rest}.jsonl
+    for p in ('m5_', 'm7_'):
+        if faith_base.startswith(p + 'metrics_faithfulness_'):
+            return p + 'metrics_' + faith_base[len(p + 'metrics_faithfulness_'):]
+    #main convention: metrics_faithfulness_{step base}_{YYYYMMDD_HHMMSS}.jsonl
+    if faith_base.startswith('metrics_faithfulness_'):
+        stem = faith_base[len('metrics_faithfulness_'):-len('.jsonl')]
+        parts = stem.rsplit('_', 2)
+        if len(parts) == 3 and parts[1].isdigit() and parts[2].isdigit():
+            stem = parts[0]
+        return stem + '.jsonl'
+    return None
+
+for fn in sorted(os.listdir(DATA)):
+    if 'faithfulness' not in fn or not fn.endswith('.jsonl'):
+        continue
+    step_fn = step_file_for(fn)
+    if step_fn is None or not os.path.exists(os.path.join(DATA, step_fn)):
+        print(f"  {fn}: no matching step file, skipped")
+        continue
+    steps = {}
+    for r in load(step_fn):
+        if r.get('event') == 'step':
+            steps[(r['episode'], r['policy_call_idx'])] = r
+    fa = [r for r in load(fn) if r.get('event') == 'faithfulness']
+    diffs = []
+    for r in fa:
+        k = (r['episode'], r['policy_call_idx'])
+        if k not in steps:
+            continue
+        g = -steps[k]['vision_gap']
+        fb = r['vision_f_baseline']
+        denom = max(abs(g), abs(fb), 1e-12)
+        diffs.append(abs(g - fb) / denom)
+    if not diffs:
+        print(f"  {fn}: no joinable rows")
+        continue
+    a = np.array(diffs)
+    pct_ok = float(np.mean(a < 0.02) * 100.0)
+    verdict = 'OWN SIDECARS' if pct_ok > 99.0 else 'FOREIGN SIDECARS'
+    print(f"  {fn}:")
+    print(f"    rows={len(a)}  %within2%={pct_ok:.1f}  median_reldiff={float(np.median(a)):.4f}  -> {verdict}")
