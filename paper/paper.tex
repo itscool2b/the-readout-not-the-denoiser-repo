@@ -312,9 +312,14 @@ Correlations are computed over the 729 external-camera patch scores for vision, 
 All sanity re-runs compute the perturbed attribution at $m{=}16$ on the first 50 steps of each task-seed base run and correlate it against that run's original $m{=}64$ attribution.
 The standard C1 and C2 rows use the main pass as the base run, while the frozen and cascade variants use the regeneration run described in Section~\ref{sec:setup}.
 The standard C1 result ($\rho \approx 0.95$, Section~\ref{sec:sanity}) doubles as a control showing that the $m$ budget mismatch alone does not decorrelate attributions.
-The stored attribution sidecars, the per-step attribution tensors saved alongside each run, did not encode the integration budget in their filenames, and the $m{=}128$ extension ran concurrently with the variant stages on PegInsertionSide and PickSingleYCB.
-Some frozen-target and cascade rows for those two tasks may therefore correlate against $m{=}128$ attributions rather than $m{=}64$ ones.
-The standard C1 control bounds the budget effect, and no verdict depends on this ambiguity.
+The stored attribution sidecars, the per-policy-call attribution tensors, reference action, observation, and proprioceptive state saved alongside each run, encoded neither the integration budget nor the episode seed in their filenames until a tagging fix that postdates every run described in this paragraph.
+Both consequences are disclosed.
+First, the $m{=}128$ extension ran concurrently with the variant sanity stages on PegInsertionSide and PickSingleYCB, so some frozen-target and cascade rows for those two tasks may correlate against $m{=}128$ attributions rather than $m{=}64$ ones.
+Second, the two seeds of each pre-fix run wrote to the same sidecar paths, with the second seed writing last, so every pre-fix stage that loaded sidecars for the first seed is exposed to having consumed the second seed's tensors, mixing the second seed's attribution rankings and observations with the first seed's noise seeding and row filtering.
+A provenance fingerprint is released with the code: the step record's expected completeness gap must equal the faithfulness record's recomputed baseline value exactly when a row's own sidecar was loaded, and the released audit script runs this check over every committed step and faithfulness record pair.
+The fingerprint proves that this consumption occurred for the two seed-42 $m{=}128$ faithfulness records, which agree with their own step records on 0\% of rows, while every post-fix record agrees on 100\% of rows.
+The affected populations and the re-certification of the affected verdicts are recorded with Table~\ref{tab:faithfulness}, Table~\ref{tab:sanity}, and the reproducibility statement.
+The standard C1 control bounds the budget effect; on the unambiguous PickCube and StackCube seed-142 subset, the frozen vision/language medians are 0.915/0.842 against the pooled 0.929/0.862 and the cascade vision/language medians are 0.712/0.911 against 0.713/0.910; no sanity verdict depends on either ambiguity.
 
 \paragraph{Baseline sensitivity.}
 For the vision modality we recompute IG under three baselines per step (black, gray, and a Gaussian blur of the actual observation) and report pairwise Spearman correlations of the patch rankings.
@@ -342,7 +347,7 @@ PickSingleYCB-v1 grasps a Yale-CMU-Berkeley (YCB) object.
 Each task is conditioned on a natural-language instruction encoded offline through T5-XXL.
 Tables abbreviate PegInsertionSide-v1 and PickSingleYCB-v1 as PegInsertion and PickYCB.
 We record five protocol deviations up front.
-The run campaigns are labeled by project month, Month 4 through Month 6, and the released records and data README use the same labels.
+The run campaigns are labeled by project month, Month 4 through Month 7, and the released records and data README use the same labels.
 The original task list named OpenDrawer, which exists only as a Fetch-mobile-manipulator variant in the installed ManiSkill3, so it was dropped.
 PickSingle does not exist under that name, so the published PickSingleYCB-v1 was substituted.
 A fifth task, TurnFaucet-v1, was attempted as an articulation substitute and dropped during the pass.
@@ -359,7 +364,7 @@ The full evaluation pass is 4 tasks $\times$ 2 seeds (42, 142) $\times$ 50 episo
 It yields roughly 1{,}900 attributed policy calls, of which 1{,}341 are signal-bearing and enter the quantitative tables.
 A step is signal-bearing when the reference action norm is at least 15.
 Quiescent steps are excluded because the completeness denominator $|F(x) - F(x')|$ is ill-conditioned when the action mean barely moves.
-Six follow-up runs extended the protocol.
+Seven follow-up runs extended the protocol.
 An $m{=}128$ subset covered PickCube and StackCube (2 seeds $\times$ 8 episodes) and was later extended to PegInsertionSide and PickSingleYCB at the same scope.
 A configuration fix raising the episode-step ceiling landed between the $m{=}64$ pass and all later runs.
 As a result, later episodes typically run to 25 policy calls while the original $m{=}64$ episodes were shorter.
@@ -371,6 +376,7 @@ A displacement run measured the action change under top-ranked deletion directly
 It swept solver steps $T \in \{1, 2, 3, 5, 10, 20\}$, the denoising-step count of Section~\ref{sec:target}, and deletion fractions up to 20\% on vision and language, with rankings taken from the $T{=}5$ attributions.
 The reported vision curves pool the 1B runs over seeds 42 and 142, use seed 42 at 170M, and carry 8 to 40 episodes per curve.
 A Month 5 reproduction run repeated the 1B faithfulness with real T5-XXL embeddings.
+A Month 7 verification pass repeated the full evaluation pass, the faithfulness stage, and the standard sanity checks at the main-pass scope with seed-tagged sidecars, together with a clean rerun of the $m{=}128$ seed-42 arm, following the external audit of the sidecar filename scheme disclosed in Section~\ref{sec:metrics}, and its records are committed.
 
 \paragraph{Hardware.}
 The main pass ran on a single RTX 4090 (24\,GB).
@@ -473,7 +479,7 @@ RDT-1B pool & Vision & 1{,}199 & $-$0.00015 & \textbf{0.940} & \textbf{0.288} \\
 RDT-1B pool & Lang. & 1{,}199 & $-$0.00012 & 0.541 & \textbf{0.267} \\
 \bottomrule
 \end{tabular}
-\caption{Faithfulness at $m{=}64$. $\Delta\log\pi$ is the median target change after top-5\% deletion, in nats. Bold AUC values pass their bars (vision insertion $\geq$0.60 and deletion $\leq$0.40, language $\geq$0.55 and $\leq$0.45). The top block is RDT-170M with both seeds on signal-bearing rows ($|$ref action$| \geq 15$). The bottom block is the RDT-1B scale check with the authors' fine-tuned weights on three evaluation seeds (42, 142, 242, with 9, 1, and 5 of 20 successes), on all policy-call rows per seed. The signal filter is inapplicable at 1B because the fine-tuned policy's action norms sit below 15 throughout. The seed 42 language values were computed against the zeroed language baseline recorded in Section~\ref{sec:setup}, while the seed 142 and 242 runs encoded their instruction embeddings and the two-token baseline with T5-XXL on their own machine. The pooled language row therefore spans the two language-baseline provenances. The vision rows are unaffected by that difference. The three vision rows show the cross-scale vision result is robust to the evaluation seed, passing both bars at every seed. The pooled vision 95\% episode bootstrap interval is 0.926 to 0.954 for insertion and 0.250 to 0.312 for deletion. Language insertion is seed-sensitive. It is 0.562, 0.583, and 0.519 at the three seeds, so it passes the 0.55 bar at two of the three seeds. The pooled value 0.541 sits just under the bar with a 95\% interval of 0.449 to 0.605 that straddles it. The committed Month 5 reproduction of seed 42 with real T5-XXL embeddings records a language insertion median of 0.515, below the bar, so the two of three count is tied to the language-baseline provenance rather than to the seeds alone. We therefore report the language insertion pass as seed-sensitive rather than robust, while the vision verdicts and the language deletion pass hold at every seed. These are evaluation seeds on one checkpoint, so they measure rollout and sampling variance, not generalization across training initializations.}
+\caption{Faithfulness at $m{=}64$. $\Delta\log\pi$ is the median target change after top-5\% deletion, in nats. Bold AUC values pass their bars (vision insertion $\geq$0.60 and deletion $\leq$0.40, language $\geq$0.55 and $\leq$0.45). The top block is RDT-170M with both seeds on signal-bearing rows ($|$ref action$| \geq 15$). The bottom block is the RDT-1B scale check with the authors' fine-tuned weights on three evaluation seeds (42, 142, 242, with 9, 1, and 5 of 20 successes), on all policy-call rows per seed. The signal filter is inapplicable at 1B because the fine-tuned policy's action norms sit below 15 throughout. The seed 42 language values were computed against the zeroed language baseline recorded in Section~\ref{sec:setup}, while the seed 142 and 242 runs encoded their instruction embeddings and the two-token baseline with T5-XXL on their own machine. The pooled language row therefore spans the two language-baseline provenances. The vision rows are unaffected by that difference. The three vision rows show the cross-scale vision result is robust to the evaluation seed, passing both bars at every seed. The pooled vision 95\% episode bootstrap interval is 0.926 to 0.954 for insertion and 0.250 to 0.312 for deletion. Language insertion is seed-sensitive. It is 0.562, 0.583, and 0.519 at the three seeds, so it passes the 0.55 bar at two of the three seeds. The pooled value 0.541 sits just under the bar with a 95\% interval of 0.449 to 0.605 that straddles it. The committed Month 5 reproduction of seed 42 with real T5-XXL embeddings records a language insertion median of 0.515, below the bar, so the two of three count is tied to the language-baseline provenance rather than to the seeds alone. We therefore report the language insertion pass as seed-sensitive rather than robust, while the vision verdicts and the language deletion pass hold at every seed. The RDT-170M block predates the sidecar seed-tagging fix of Section~\ref{sec:metrics}, and its seed-42-labeled halves are presumed to have consumed seed-142 sidecars, mixing that seed's rankings and observations with seed-42 noise seeding and signal filtering. The released verification records from the full protocol rerun with seed-tagged sidecars (Section~\ref{sec:setup}) reproduce every vision verdict in this block, with insertion from 0.766 to 0.868 and deletion from 0.286 to 0.362 across the four tasks, and reproduce the language misses. One borderline cell crosses its bar: PickCube language deletion is 0.438 in the verification pass against the tabulated 0.477, moving to the passing side of the 0.45 bar, consistent with reading the 170M language metrics as mixed. These are evaluation seeds on one checkpoint, so they measure rollout and sampling variance, not generalization across training initializations.}
 \label{tab:faithfulness}
 \end{table}
 
@@ -534,7 +540,7 @@ StackCube & C1 & 0.953 & 0.970 & 0.667 \\
 \multicolumn{2}{@{}l}{C1 cascade (pooled)} & 0.713 & 0.910 & 0.643 \\
 \bottomrule
 \end{tabular}
-\caption{Sanity checks (Spearman $\rho$, where bold passes the $\leq$0.2 bar). The per-task rows are the standard C1 (final-layer re-init, moving target) and C2 (input shuffle) on signal-bearing rows ($n$ = 67/62/85/75 per task). The bottom block holds the strict frozen-target and full-backbone cascade C1 variants, pooled over all four tasks and both seeds ($n{=}400$ each, no signal filter). Perturbed attributions are computed at $m{=}16$ (Section~\ref{sec:metrics}). The variant rows correlate against the regeneration run and carry the language-baseline and embedding-proxy deviations recorded in Section~\ref{sec:setup}. The released interval tables give a 95\% episode bootstrap interval of 0.906 to 0.940 for the pooled frozen vision median.}
+\caption{Sanity checks (Spearman $\rho$, where bold passes the $\leq$0.2 bar). The per-task rows are the standard C1 (final-layer re-init, moving target) and C2 (input shuffle) on signal-bearing rows ($n$ = 67/62/85/75 per task). The bottom block holds the strict frozen-target and full-backbone cascade C1 variants, pooled over all four tasks and both seeds ($n{=}400$ each, no signal filter). Perturbed attributions are computed at $m{=}16$ (Section~\ref{sec:metrics}). The variant rows correlate against the regeneration run and carry the language-baseline and embedding-proxy deviations recorded in Section~\ref{sec:setup}. The released interval tables give a 95\% episode bootstrap interval of 0.906 to 0.940 for the pooled frozen vision median. The per-task C1 and C2 rows come from the pre-fix main pass and carry the same seed exposure disclosed in Section~\ref{sec:metrics}. The verification pass reproduces every standard-row verdict: C1 remains above the 0.2 bar at 0.916 to 0.965 on vision and language, C2 vision passes on all four tasks at 0.097 to 0.167, and C2 language passes on three of four, with StackCube borderline at 0.252.}
 \label{tab:sanity}
 \end{table}
 
@@ -735,7 +741,7 @@ PickCube & 0.825 & 0.539 & 0.455 \\
 StackCube & 0.814 & 0.546 & 0.496 \\
 \bottomrule
 \end{tabular}
-\caption{Vision baseline sensitivity, reported as the median pairwise Spearman $\rho$ of patch rankings across baselines (the first 30 steps per task, seed 42, $m{=}64$). Uninformative baselines are interchangeable. The content-aware blur baseline shifts the IG anchor and diverges.}
+\caption{Vision baseline sensitivity, reported as the median pairwise Spearman $\rho$ of patch rankings across baselines over the first 30 steps per task at $m{=}64$. The sweep predates the sidecar tagging fix of Section~\ref{sec:metrics}, so the loaded contexts are presumed to be the seed-142 regeneration episodes rather than the seed-42 episodes named in the row metadata. All three baseline attributions of a row are recomputed from one loaded context under one noise seed, so the pairwise correlations compare like with like on real observations regardless of the context's seed identity. Uninformative baselines are interchangeable. The content-aware blur baseline shifts the IG anchor and diverges.}
 \label{tab:baseline}
 \end{table}
 
@@ -750,7 +756,11 @@ The matched views are small ($n{=}41$ and $n{=}49$), so these point estimates ca
 The full $m{=}128$ view retains every policy call of each episode, including deep mid-trajectory rows the $m{=}64$ pass never sampled.
 It is the richer dataset but not a like-for-like comparison, and its pooled pass rates (72.9\% and 62.0\%) reflect that harder row mix rather than a regression.
 The $m{=}128$ faithfulness rows behave the same way.
-Vision insertion AUC holds at 0.70 to 0.93 across the four tasks on the as-recorded rows, with the floor at 0.69 after the resume-replay deduplication documented in the released data README. The full-view deletion AUC drifts above the 0.40 bar on StackCube (0.444) and PickSingleYCB (0.415, over all rows of that run) on harder full-episode row mixes.
+The released seed-42 $m{=}128$ faithfulness records are excluded from the quoted values because the provenance fingerprint of Section~\ref{sec:metrics} proves that they consumed seed-142 sidecars.
+On the fingerprint-verified seed-142 rows, vision insertion AUC is 0.74 on PegInsertionSide (0.72 after the resume-replay deduplication documented in the released data README) and 0.95 on PickSingleYCB.
+The decommissioned PickCube and StackCube $m{=}128$ records, whose both-seed pooling carries the disclosed seed exposure, recorded 0.86 on both tasks.
+The full-view deletion AUC drifts above the 0.40 bar on harder full-episode row mixes, to 0.476 on the verified PickSingleYCB rows and 0.444 on the decommissioned StackCube record.
+The verification pass's clean seed-42 arm (Section~\ref{sec:setup}) reproduces both claims, with insertion at 0.79 on PegInsertionSide and 0.91 on PickSingleYCB and with PickSingleYCB deletion again above the bar at 0.442.
 
 \begin{table}[t!]
 \centering
@@ -882,6 +892,8 @@ These are the completeness values in Table~\ref{tab:correctness}, the RDT-170M b
 The three-seed RDT-1B rows of Table~\ref{tab:faithfulness} and the frozen-target and cascade rows of Table~\ref{tab:sanity} are computed from the committed records and regenerate exactly from them, with bootstrap intervals in the released interval tables.
 The released analysis notebooks preserve the Table~\ref{tab:correctness} values exactly and retain the other analyses over broader unfiltered row populations.
 A README maps each committed file to the run it represents.
+Two committed records are retained with a known defect rather than silently replaced: the seed-42 $m{=}128$ faithfulness files consumed seed-142 sidecars through the pre-fix shared filenames, as the released audit script proves through the gap-identity fingerprint of Section~\ref{sec:metrics}, and the README marks them accordingly; no published value derives from them.
+The Month 7 verification records were produced by a single recorded script that reran the full pass, its faithfulness, the standard sanity checks, and the $m{=}128$ seed-42 arm with seed-tagged sidecars; they reproduce every published verdict they test, and their episode-bootstrap intervals ship with the released interval tables.
 Attribution sidecar tensors are too large to distribute and are regenerable from the fixed-seed scripts.
 Hardware and library versions can shift episode lengths and success counts, as the Month 5 reproduction run shows, while the reproduced medians stay inside the episode bootstrap intervals.
 Code, records, interval tables, and the analysis notebooks are available at \url{https://github.com/itscool2b/the-readout-not-the-denoiser-repo}.
