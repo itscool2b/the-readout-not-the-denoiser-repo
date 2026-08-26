@@ -6,8 +6,8 @@ authors:
     given-names: Arjun
 repository-code: "https://github.com/itscool2b/the-readout-not-the-denoiser-repo"
 license: MIT
-version: 1.0.2
-date-released: "2026-07-05"
+version: 1.1.0
+date-released: "2026-08-26"
 preferred-citation:
   type: article
   title: "The Readout, Not the Denoiser: Per-Step Integrated Gradients for Diffusion-Policy Vision-Language-Action Models"

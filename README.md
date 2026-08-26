@@ -46,6 +46,8 @@ The precomputed instruction embeddings under `data/lang_embeds/` are not redistr
 
 The reproducibility statement in the paper records which original records were decommissioned and which committed records corroborate them.
 
+The Month 7 verification records (`data/m7_*.jsonl`, produced by `scripts/run_verification.sh`) re-run the full pass, faithfulness, and standard sanity with seed-tagged sidecars and re-certify the affected verdicts, as the paper's Table 2 and Table 3 captions record. `audit.py` includes a sidecar provenance fingerprint that verifies every committed step/faithfulness pair, flags the two retained pre-fix seed-42 m=128 faithfulness files as having consumed seed-142 sidecars (see `data/README.md`), and clears every other pair at 100% of rows.
+
 ## Citing
 
 See `CITATION.cff`, or use:
