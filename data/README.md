@@ -50,6 +50,7 @@ a smaller episode budget.
 | `metrics_PickCube-v1_170m_seed{42,142}_{l2,maxdev}.jsonl` | Target ablation, alternative targets | regeneration scope; the `seed42` l2/maxdev files contain a duplicated partial episode 12 from a `--resume` restart, and `..._seed42_maxdev.jsonl` has one NUL-corrupted line (the analysis loader skips it) |
 | `metrics_PickCube-v1_170m_seed{42,142}_logpi.jsonl` | Matched-population logpi target step records, Month 6 (the per-step IG run behind the Table 4 logpi faithfulness column) | regeneration scope, 15 episodes per seed |
 | `m7_metrics_<task>_170m_seed{42,142}.jsonl` | **Month 7 verification pass** (`scripts/run_verification.sh` V1): a clean rerun of the main-pass protocol with seed-tagged sidecars, after the sidecar seed collision disclosed above. `--max-policy-calls 4` (7 on PegInsertionSide) reproduces the original pass's episode shape | 50 episodes per seed, 1,894 step rows total, 1,347 signal-bearing, 2 successes in 400 episodes |
+| `m7_metrics_{PegInsertionSide,PickSingleYCB}-v1_170m_seed42_m128.jsonl` | Month 7 clean rerun of the m=128 seed-42 arm (V4 step records; their faithfulness outputs are listed below) | 8 episodes each at m=128, full post-fix episode shape |
 | `metrics_PickCube-v1_1b_seed42.jsonl` | RDT-1B scale check (authors' fine-tuned weights) | 20 episodes, 9 successes; all rows below the signal threshold |
 | `metrics_PickCube-v1_1b_seed{142,242}.jsonl` | RDT-1B scale check, Month 6 evaluation seeds. Environment and IG protocol matched to the committed seed 42 run, executed on a fresh RTX PRO 6000 pod that encoded its own T5-XXL instruction embeddings and two-token language baseline, so the language rows span a different baseline provenance than the seed 42 record (see the paper's Setup deviations) | 20 episodes each, 1 and 5 successes; all rows below the signal threshold |
 | `metrics_StackCube-v1_1b_seed142.jsonl` | RDT-1B StackCube base run for the Month 6 displacement second seed. The 1B is not fine-tuned for StackCube and succeeds on 7 of 20 episodes here; this run only sources the displacement re-run and is not a faithfulness result | 20 episodes, 7 successes; all rows below the signal threshold |
@@ -81,7 +82,7 @@ bootstrap loader's dedup applies to them the same way.)
 (The standard last-layer C1 and the C2 input-randomization runs behind the
 per-task rows of Table 3 are part of the main pass and are not in this release.)
 
-| `m7_metrics_sanity_{C1,C2}_<task>_170m_seed{42,142}.jsonl` | Month 7 verification sanity (V3): standard last-layer C1 and C2 over the m7 step records, m=16, first 50 rows per task-seed, shuffle seed 777. Reproduces every Table 3 standard-row verdict: C1 fails everywhere (vision 0.936 to 0.965), C2 vision passes everywhere (0.097 to 0.167), C2 language passes three of four with StackCube borderline (0.252) |
+| `m7_metrics_sanity_{C1,C2}_<task>_170m_seed{42,142}.jsonl` | Month 7 verification sanity (V3): standard last-layer C1 and C2 over the m7 step records, m=16, first 50 rows per task-seed, shuffle seed 777. Reproduces every Table 3 standard-row verdict: C1 fails everywhere (vision and language 0.916 to 0.965), C2 vision passes everywhere (0.097 to 0.167), C2 language passes three of four with StackCube borderline (0.252) |
 
 ## Baseline sensitivity (`metrics_baseline_sensitivity_*`)
 
