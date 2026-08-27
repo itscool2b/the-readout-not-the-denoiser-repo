@@ -2,7 +2,7 @@
 
 Per-step, per-modality Integrated Gradients for diffusion-policy vision-language-action models. This repository holds the code, the released metrics records, and the analysis notebooks behind the paper.
 
-The paper source and PDF live in `paper/` (`paper/paper.tex`, `paper/paper.pdf`). The method attributes every control decision of the Robotics Diffusion Transformer (RDT) to its vision, language, and state inputs across ManiSkill3 manipulation episodes, and the paper reports two structural findings about evaluating attribution on diffusion policies.
+The paper is published on [Zenodo](https://doi.org/10.5281/zenodo.22133507). Its source and PDF also live in `paper/` (`paper/paper.tex`, `paper/paper.pdf`). The method attributes every control decision of the Robotics Diffusion Transformer (RDT) to its vision, language, and state inputs across ManiSkill3 manipulation episodes, and the paper reports two structural findings about evaluating attribution on diffusion policies.
 
 ## Layout
 
@@ -58,6 +58,8 @@ See `CITATION.cff`, or use:
             for Diffusion-Policy Vision-Language-Action Models},
   author = {Bajpai, Arjun},
   year   = {2026},
+  doi    = {10.5281/zenodo.22133507},
+  url    = {https://doi.org/10.5281/zenodo.22133507},
 }
 ```
 

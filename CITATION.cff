@@ -11,6 +11,7 @@ date-released: "2026-08-26"
 preferred-citation:
   type: article
   title: "The Readout, Not the Denoiser: Per-Step Integrated Gradients for Diffusion-Policy Vision-Language-Action Models"
+  doi: "10.5281/zenodo.22133507"
   year: 2026
   authors:
     - family-names: Bajpai
